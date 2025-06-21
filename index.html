@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tool Hub - Your Gateway to Productivity</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            position: relative;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .timeline-container {
+            position: relative;
+            padding-left: 80px;
+        }
+
+        .timeline-line {
+            position: absolute;
+            left: 40px;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(to bottom, #4facfe 0%, #00f2fe 100%);
+            border-radius: 2px;
+            box-shadow: 0 0 10px rgba(79, 172, 254, 0.5);
+        }
+
+        .category {
+            position: relative;
+            margin-bottom: 50px;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .category:nth-child(even) {
+            animation-delay: 0.2s;
+        }
+
+        .category:nth-child(odd) {
+            animation-delay: 0.1s;
+        }
+
+        .category-marker {
+            position: absolute;
+            left: -52px;
+            top: 20px;
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(45deg, #4facfe 0%, #00f2fe 100%);
+            border-radius: 50%;
+            border: 4px solid white;
+            box-shadow: 0 0 0 4px rgba(79, 172, 254, 0.3);
+            z-index: 2;
+        }
+
+        .category-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .category-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .category-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .category-icon {
+            width: 30px;
+            height: 30px;
+            background: linear-gradient(45deg, #4facfe 0%, #00f2fe 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .tool-link {
+            display: block;
+            padding: 15px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tool-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .tool-link:hover::before {
+            left: 100%;
+        }
+
+        .tool-link:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .add-category-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(45deg, #4facfe 0%, #00f2fe 100%);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 5px 20px rgba(79, 172, 254, 0.4);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .add-category-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 25px rgba(79, 172, 254, 0.6);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .timeline-container {
+                padding-left: 60px;
+            }
+
+            .timeline-line {
+                left: 30px;
+            }
+
+            .category-marker {
+                left: -42px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .tools-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #4facfe;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #555;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛠️ Tool Hub</h1>
+            <p>Your Gateway to Productivity and AI-Powered Tools</p>
+        </div>
+
+        <div class="timeline-container">
+            <div class="timeline-line"></div>
+            
+            <div class="category">
+                <div class="category-marker"></div>
+                <div class="category-card">
+                    <h2 class="category-title">
+                        <div class="category-icon">📊</div>
+                        Office Efficiency
+                    </h2>
+                    <div class="tools-grid">
+                        <a href="https://yanweifuture.github.io/tsingyewaitools/date_tools.html" class="tool-link" target="_blank">
+                            📅 What week is it today
+                        </a>
+                        <a href="https://www.microsoft.com" class="tool-link" target="_blank">
+                            💼 Office
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="category">
+                <div class="category-marker"></div>
+                <div class="category-card">
+                    <h2 class="category-title">
+                        <div class="category-icon">🤖</div>
+                        AI Tools
+                    </h2>
+                    <div class="tools-grid">
+                        <a href="https://chatgpt.com" class="tool-link" target="_blank">
+                            💬 ChatGPT
+                        </a>
+                        <a href="https://www.perplexity.ai/" class="tool-link" target="_blank">
+                            🔍 Perplexity
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="add-category-btn" onclick="openModal()">+</button>
+
+    <!-- Modal for adding new category -->
+    <div id="categoryModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Add New Category</div>
+            <form id="categoryForm">
+                <div class="form-group">
+                    <label for="categoryName">Category Name:</label>
+                    <input type="text" id="categoryName" name="categoryName" required>
+                </div>
+                <div class="form-group">
+                    <label for="categoryIcon">Category Icon (emoji):</label>
+                    <input type="text" id="categoryIcon" name="categoryIcon" placeholder="🔧" maxlength="2">
+                </div>
+                <div class="form-group">
+                    <label for="toolName1">First Tool Name:</label>
+                    <input type="text" id="toolName1" name="toolName1">
+                </div>
+                <div class="form-group">
+                    <label for="toolUrl1">First Tool URL:</label>
+                    <input type="url" id="toolUrl1" name="toolUrl1" placeholder="https://example.com">
+                </div>
+                <div class="form-group">
+                    <label for="toolName2">Second Tool Name:</label>
+                    <input type="text" id="toolName2" name="toolName2">
+                </div>
+                <div class="form-group">
+                    <label for="toolUrl2">Second Tool URL:</label>
+                    <input type="url" id="toolUrl2" name="toolUrl2" placeholder="https://example.com">
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Category</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openModal() {
+            document.getElementById('categoryModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('categoryModal').style.display = 'none';
+            document.getElementById('categoryForm').reset();
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('categoryModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+
+        document.getElementById('categoryForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const categoryName = document.getElementById('categoryName').value;
+            const categoryIcon = document.getElementById('categoryIcon').value || '🔧';
+            const toolName1 = document.getElementById('toolName1').value;
+            const toolUrl1 = document.getElementById('toolUrl1').value;
+            const toolName2 = document.getElementById('toolName2').value;
+            const toolUrl2 = document.getElementById('toolUrl2').value;
+
+            if (categoryName) {
+                addNewCategory(categoryName, categoryIcon, toolName1, toolUrl1, toolName2, toolUrl2);
+                closeModal();
+            }
+        });
+
+        function addNewCategory(name, icon, toolName1, toolUrl1, toolName2, toolUrl2) {
+            const timelineContainer = document.querySelector('.timeline-container');
+            
+            const categoryDiv = document.createElement('div');
+            categoryDiv.className = 'category';
+            categoryDiv.style.animationDelay = '0.1s';
+            
+            let toolsHtml = '';
+            if (toolName1 && toolUrl1) {
+                toolsHtml += `<a href="${toolUrl1}" class="tool-link" target="_blank">${toolName1}</a>`;
+            }
+            if (toolName2 && toolUrl2) {
+                toolsHtml += `<a href="${toolUrl2}" class="tool-link" target="_blank">${toolName2}</a>`;
+            }
+            
+            categoryDiv.innerHTML = `
+                <div class="category-marker"></div>
+                <div class="category-card">
+                    <h2 class="category-title">
+                        <div class="category-icon">${icon}</div>
+                        ${name}
+                    </h2>
+                    <div class="tools-grid">
+                        ${toolsHtml}
+                    </div>
+                </div>
+            `;
+            
+            timelineContainer.appendChild(categoryDiv);
+        }
+
+        // Add smooth scrolling for better UX
+        document.addEventListener('DOMContentLoaded', function() {
+            const categories = document.querySelectorAll('.category');
+            
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+            
+            const observer = new IntersectionObserver(function(entries) {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, observerOptions);
+            
+            categories.forEach(category => {
+                observer.observe(category);
+            });
+        });
+    </script>
+</body>
+</html>
