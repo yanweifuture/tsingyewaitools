@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Temple Wooden Fish - Mokugyo</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #8B4513, #D2691E, #CD853F);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Georgia', serif;
+            overflow: hidden;
+        }
+
+        .temple-container {
+            text-align: center;
+            position: relative;
+        }
+
+        .title {
+            color: #2F1B14;
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            font-weight: bold;
+        }
+
+        .wooden-fish {
+            width: 300px;
+            height: 200px;
+            background: linear-gradient(45deg, #8B4513, #A0522D, #CD853F);
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            position: relative;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            transition: transform 0.1s ease;
+            margin: 0 auto 50px auto;
+        }
+
+        .wooden-fish:hover {
+            transform: scale(1.05);
+        }
+
+        .wooden-fish:active {
+            transform: scale(0.95);
+        }
+
+        .fish-details {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            height: 60%;
+            background: linear-gradient(45deg, #654321, #8B4513);
+            border-radius: 50%;
+            box-shadow: inset 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .fish-mouth {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 20px;
+            background: #2F1B14;
+            border-radius: 50%;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
+        }
+
+        .hammer {
+            position: absolute;
+            top: -80px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 80px;
+            background: linear-gradient(to bottom, #8B4513, #A0522D);
+            border-radius: 10px;
+            transition: transform 0.2s ease;
+            transform-origin: bottom center;
+        }
+
+        .hammer-head {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 30px;
+            background: linear-gradient(45deg, #654321, #8B4513);
+            border-radius: 50%;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+
+        .strike-animation {
+            animation: strike 0.3s ease-out;
+        }
+
+        @keyframes strike {
+            0% { transform: translateX(-50%) rotate(0deg); }
+            50% { transform: translateX(-50%) rotate(15deg); }
+            100% { transform: translateX(-50%) rotate(0deg); }
+        }
+
+        .ripple {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 0;
+            height: 0;
+            border: 2px solid rgba(255, 215, 0, 0.6);
+            border-radius: 50%;
+            animation: ripple 0.6s ease-out;
+        }
+
+        @keyframes ripple {
+            0% {
+                width: 0;
+                height: 0;
+                opacity: 1;
+            }
+            100% {
+                width: 400px;
+                height: 400px;
+                opacity: 0;
+            }
+        }
+
+        .instructions {
+            color: #2F1B14;
+            font-size: 1.2em;
+            margin-top: 20px;
+            opacity: 0.8;
+        }
+
+        .sound-waves {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+
+        .wave {
+            position: absolute;
+            border: 2px solid rgba(255, 215, 0, 0.4);
+            border-radius: 50%;
+            animation: wave 1s ease-out infinite;
+        }
+
+        @keyframes wave {
+            0% {
+                width: 0;
+                height: 0;
+                opacity: 1;
+            }
+            100% {
+                width: 300px;
+                height: 300px;
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="temple-container">
+        <h1 class="title">🏯 Temple Wooden Fish 🏯</h1>
+        
+        <div class="wooden-fish" id="woodenFish">
+            <div class="fish-details"></div>
+            <div class="fish-mouth"></div>
+            <div class="hammer" id="hammer">
+                <div class="hammer-head"></div>
+            </div>
+        </div>
+        
+        <p class="instructions">Click the wooden fish to strike it and hear the temple sound</p>
+    </div>
+
+    <script>
+        // Create audio context for generating wooden fish sound
+        let audioContext;
+        
+        function initAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playWoodenFishSound() {
+            initAudio();
+            
+            // Create a wooden fish striking sound using Web Audio API
+            const oscillator1 = audioContext.createOscillator();
+            const oscillator2 = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            // Set frequencies for a wooden, hollow sound
+            oscillator1.frequency.setValueAtTime(200, audioContext.currentTime);
+            oscillator2.frequency.setValueAtTime(400, audioContext.currentTime);
+            
+            // Set waveform for wooden sound
+            oscillator1.type = 'triangle';
+            oscillator2.type = 'sine';
+            
+            // Connect nodes
+            oscillator1.connect(gainNode);
+            oscillator2.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            // Set volume envelope for striking effect
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.01);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+            
+            // Start and stop oscillators
+            oscillator1.start(audioContext.currentTime);
+            oscillator2.start(audioContext.currentTime);
+            oscillator1.stop(audioContext.currentTime + 0.5);
+            oscillator2.stop(audioContext.currentTime + 0.5);
+        }
+
+        function createRipple(x, y) {
+            const ripple = document.createElement('div');
+            ripple.className = 'ripple';
+            ripple.style.left = x + 'px';
+            ripple.style.top = y + 'px';
+            document.body.appendChild(ripple);
+            
+            setTimeout(() => {
+                ripple.remove();
+            }, 600);
+        }
+
+        function createSoundWaves() {
+            const container = document.querySelector('.wooden-fish');
+            const waves = document.createElement('div');
+            waves.className = 'sound-waves';
+            
+            for (let i = 0; i < 3; i++) {
+                const wave = document.createElement('div');
+                wave.className = 'wave';
+                wave.style.animationDelay = (i * 0.2) + 's';
+                waves.appendChild(wave);
+            }
+            
+            container.appendChild(waves);
+            
+            setTimeout(() => {
+                waves.remove();
+            }, 1500);
+        }
+
+        // Add click event listener
+        document.getElementById('woodenFish').addEventListener('click', function(e) {
+            // Play sound
+            playWoodenFishSound();
+            
+            // Animate hammer
+            const hammer = document.getElementById('hammer');
+            hammer.classList.add('strike-animation');
+            
+            // Create visual effects
+            const rect = this.getBoundingClientRect();
+            createRipple(e.clientX, e.clientY);
+            createSoundWaves();
+            
+            // Remove animation class after animation completes
+            setTimeout(() => {
+                hammer.classList.remove('strike-animation');
+            }, 300);
+        });
+
+        // Initialize audio on first user interaction
+        document.addEventListener('click', initAudio, { once: true });
+    </script>
+</body>
+</html>
