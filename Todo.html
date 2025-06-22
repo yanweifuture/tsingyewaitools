@@ -1,0 +1,677 @@
+
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Modern Todo App</title>
+  <style>
+    :root {
+      --primary: #4f8cff;
+      --primary-dark: #2a5db0;
+      --bg: #f7f8fa;
+      --bg-dark: #181a1b;
+      --card: #fff;
+      --card-dark: #23272f;
+      --text: #222;
+      --text-dark: #f5f5f5;
+      --low: #a3e635;
+      --medium: #facc15;
+      --high: #f87171;
+      --transition: 0.2s cubic-bezier(.4,0,.2,1);
+      --shadow: 0 2px 8px rgba(0,0,0,0.07);
+    }
+    [data-theme="dark"] {
+      --bg: var(--bg-dark);
+      --card: var(--card-dark);
+      --text: var(--text-dark);
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      transition: background var(--transition), color var(--transition);
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 700px;
+      margin: 2rem auto;
+      background: var(--card);
+      border-radius: 1.2rem;
+      box-shadow: var(--shadow);
+      padding: 2rem 1.5rem 1.5rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      transition: background var(--transition);
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .theme-toggle {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: var(--primary);
+      transition: color var(--transition);
+    }
+    .todo-form {
+      display: grid;
+      grid-template-columns: 1fr 120px 110px 110px 40px;
+      gap: 0.5rem;
+      align-items: center;
+    }
+    .todo-form input, .todo-form select {
+      padding: 0.5rem 0.7rem;
+      border: 1px solid #e0e0e0;
+      border-radius: 0.5rem;
+      font-size: 1rem;
+      background: var(--bg);
+      color: var(--text);
+      transition: background var(--transition), color var(--transition);
+    }
+    .todo-form input[type="date"] {
+      min-width: 0;
+    }
+    .todo-form button {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 0.5rem;
+      padding: 0.5rem 0.7rem;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: background var(--transition), transform 0.1s;
+      box-shadow: 0 1px 4px rgba(79,140,255,0.08);
+    }
+    .todo-form button:active {
+      transform: scale(0.97);
+    }
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.7rem;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+    .filters input, .filters select {
+      padding: 0.3rem 0.6rem;
+      border-radius: 0.4rem;
+      border: 1px solid #e0e0e0;
+      font-size: 0.98rem;
+      background: var(--bg);
+      color: var(--text);
+      transition: background var(--transition), color var(--transition);
+    }
+    .todo-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+      min-height: 60px;
+    }
+    .todo-item {
+      display: grid;
+      grid-template-columns: 30px 1fr 90px 90px 40px 40px;
+      align-items: center;
+      background: var(--bg);
+      border-radius: 0.7rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+      padding: 0.7rem 0.7rem 0.7rem 0.5rem;
+      gap: 0.5rem;
+      transition: box-shadow var(--transition), background var(--transition), transform 0.15s;
+      cursor: grab;
+      position: relative;
+      opacity: 1;
+      animation: fadeIn 0.4s;
+    }
+    .todo-item.dragging {
+      opacity: 0.5;
+      background: #e0e7ef;
+      z-index: 2;
+      box-shadow: 0 4px 16px rgba(79,140,255,0.15);
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px);}
+      to { opacity: 1; transform: translateY(0);}
+    }
+    .todo-item.completed {
+      opacity: 0.7;
+      text-decoration: line-through;
+      background: #e5e7eb;
+    }
+    [data-theme="dark"] .todo-item.completed {
+      background: #23272f;
+    }
+    .todo-category {
+      display: inline-block;
+      padding: 0.2rem 0.7rem;
+      border-radius: 1rem;
+      font-size: 0.92rem;
+      font-weight: 500;
+      margin-right: 0.3rem;
+      background: #e0e7ef;
+      color: #3b3b3b;
+      transition: background var(--transition), color var(--transition);
+    }
+    .todo-priority {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      margin-right: 0.3rem;
+      vertical-align: middle;
+      border: 2px solid #fff;
+      box-shadow: 0 0 0 2px var(--bg);
+      transition: box-shadow var(--transition);
+    }
+    .priority-low { background: var(--low);}
+    .priority-medium { background: var(--medium);}
+    .priority-high { background: var(--high);}
+    .todo-title {
+      font-size: 1.08rem;
+      font-weight: 500;
+      word-break: break-word;
+      transition: color var(--transition);
+    }
+    .todo-date {
+      font-size: 0.97rem;
+      color: #888;
+      text-align: right;
+    }
+    .todo-actions {
+      display: flex;
+      gap: 0.3rem;
+      justify-content: flex-end;
+    }
+    .todo-actions button {
+      background: none;
+      border: none;
+      font-size: 1.1rem;
+      cursor: pointer;
+      color: var(--primary-dark);
+      border-radius: 0.3rem;
+      padding: 0.2rem 0.3rem;
+      transition: background var(--transition), color var(--transition), transform 0.1s;
+    }
+    .todo-actions button:active {
+      transform: scale(0.93);
+    }
+    .todo-actions .delete-btn { color: var(--high);}
+    .todo-actions .edit-btn { color: var(--primary);}
+    .todo-actions .complete-btn { color: var(--low);}
+    .todo-actions .remind-btn { color: var(--medium);}
+    .todo-complete {
+      accent-color: var(--primary);
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+      transition: accent-color var(--transition);
+    }
+    .empty-state {
+      text-align: center;
+      color: #aaa;
+      font-size: 1.1rem;
+      margin-top: 1.5rem;
+      opacity: 0.7;
+    }
+    @media (max-width: 600px) {
+      .container { padding: 1rem 0.3rem;}
+      .todo-form {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto auto auto;
+        gap: 0.4rem;
+      }
+      .todo-form input, .todo-form select, .todo-form button {
+        font-size: 0.98rem;
+      }
+      .todo-form input[name="title"] { grid-column: 1/3;}
+      .todo-form select[name="category"] { grid-column: 1;}
+      .todo-form select[name="priority"] { grid-column: 2;}
+      .todo-form input[type="date"] { grid-column: 1;}
+      .todo-form button { grid-column: 2;}
+      .todo-list { gap: 0.4rem;}
+      .todo-item {
+        grid-template-columns: 24px 1fr 60px 60px 30px 30px;
+        font-size: 0.97rem;
+        padding: 0.5rem 0.3rem 0.5rem 0.2rem;
+      }
+      .todo-category { font-size: 0.85rem;}
+      .todo-date { font-size: 0.9rem;}
+    }
+    /* Micro-interactions */
+    .todo-item .todo-title:focus {
+      outline: 2px solid var(--primary);
+      background: #e0e7ef;
+    }
+    .todo-item .todo-title[contenteditable="true"] {
+      background: #e0e7ef;
+      border-radius: 0.3rem;
+      padding: 0.1rem 0.2rem;
+      transition: background var(--transition);
+    }
+    .todo-item .todo-title[contenteditable="true"]:empty:before {
+      content: "Edit task...";
+      color: #bbb;
+    }
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      background: #e5e7eb;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #b6c2d1;
+      border-radius: 4px;
+    }
+    [data-theme="dark"] ::-webkit-scrollbar {
+      background: #23272f;
+    }
+    [data-theme="dark"] ::-webkit-scrollbar-thumb {
+      background: #444b5a;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>📝 Todo App</h1>
+      <button class="theme-toggle" title="Toggle dark/light theme" aria-label="Toggle theme">
+        <span id="theme-icon">🌙</span>
+      </button>
+    </header>
+    <form class="todo-form" autocomplete="off">
+      <input name="title" type="text" placeholder="Add a new task..." required maxlength="80" />
+      <select name="category" required>
+        <option value="" disabled selected>Category</option>
+        <option value="Work">Work</option>
+        <option value="Personal">Personal</option>
+        <option value="Shopping">Shopping</option>
+        <option value="Study">Study</option>
+        <option value="Other">Other</option>
+      </select>
+      <select name="priority" required>
+        <option value="" disabled selected>Priority</option>
+        <option value="low">Low</option>
+        <option value="medium">Medium</option>
+        <option value="high">High</option>
+      </select>
+      <input name="due" type="date" required />
+      <button type="submit" title="Add Task">＋</button>
+    </form>
+    <div class="filters">
+      <input type="search" id="search" placeholder="Search tasks..." />
+      <select id="filter-status">
+        <option value="all">All Status</option>
+        <option value="active">Active</option>
+        <option value="completed">Completed</option>
+      </select>
+      <select id="filter-category">
+        <option value="all">All Categories</option>
+        <option value="Work">Work</option>
+        <option value="Personal">Personal</option>
+        <option value="Shopping">Shopping</option>
+        <option value="Study">Study</option>
+        <option value="Other">Other</option>
+      </select>
+      <input type="date" id="filter-date-from" title="From date" />
+      <input type="date" id="filter-date-to" title="To date" />
+    </div>
+    <div class="todo-list" id="todo-list"></div>
+    <div class="empty-state" id="empty-state" style="display:none;">No tasks found.</div>
+  </div>
+  <audio id="reminder-sound" src="https://cdn.pixabay.com/audio/2022/07/26/audio_124bfae3b2.mp3" preload="auto"></audio>
+  <script>
+    // --- Theme ---
+    const themeToggle = document.querySelector('.theme-toggle');
+    const themeIcon = document.getElementById('theme-icon');
+    function setTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('theme', theme);
+      themeIcon.textContent = theme === 'dark' ? '🌞' : '🌙';
+    }
+    function getSystemTheme() {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    function initTheme() {
+      const saved = localStorage.getItem('theme');
+      setTheme(saved || getSystemTheme());
+    }
+    themeToggle.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme');
+      setTheme(current === 'dark' ? 'light' : 'dark');
+    });
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+      if (!localStorage.getItem('theme')) setTheme(e.matches ? 'dark' : 'light');
+    });
+    initTheme();
+
+    // --- Data ---
+    const STORAGE_KEY = 'todo-app-tasks-v2';
+    let tasks = [];
+    let editingId = null;
+    let reminderTimeouts = {};
+
+    function saveTasks() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+    }
+    function loadTasks() {
+      tasks = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    }
+
+    // --- Utils ---
+    function uuid() {
+      return '_' + Math.random().toString(36).substr(2, 9);
+    }
+    function todayStr() {
+      return new Date().toISOString().slice(0,10);
+    }
+    function formatDate(dateStr) {
+      if (!dateStr) return '';
+      const d = new Date(dateStr);
+      return d.toLocaleDateString(undefined, {year:'numeric',month:'short',day:'numeric'});
+    }
+    function compareDate(a, b) {
+      return new Date(a) - new Date(b);
+    }
+    function notify(title, body) {
+      if (Notification.permission === 'granted') {
+        new Notification(title, { body });
+      }
+      document.getElementById('reminder-sound').play();
+    }
+    function scheduleReminders() {
+      // Clear previous
+      Object.values(reminderTimeouts).forEach(clearTimeout);
+      reminderTimeouts = {};
+      const now = Date.now();
+      tasks.forEach(task => {
+        if (task.completed) return;
+        if (!task.due) return;
+        const due = new Date(task.due + 'T09:00:00').getTime();
+        if (due > now) {
+          const ms = due - now;
+          reminderTimeouts[task.id] = setTimeout(() => {
+            notify('Task Reminder', `Task "${task.title}" is due today!`);
+          }, ms);
+        }
+      });
+    }
+    if ('Notification' in window && Notification.permission !== 'granted') {
+      Notification.requestPermission();
+    }
+
+    // --- Render ---
+    const todoList = document.getElementById('todo-list');
+    const emptyState = document.getElementById('empty-state');
+    function renderTasks() {
+      todoList.innerHTML = '';
+      let filtered = filterTasks(tasks);
+      if (filtered.length === 0) {
+        emptyState.style.display = '';
+        return;
+      }
+      emptyState.style.display = 'none';
+      filtered.forEach(task => {
+        const item = document.createElement('div');
+        item.className = 'todo-item' + (task.completed ? ' completed' : '');
+        item.setAttribute('draggable', 'true');
+        item.dataset.id = task.id;
+
+        // Complete checkbox
+        const complete = document.createElement('input');
+        complete.type = 'checkbox';
+        complete.className = 'todo-complete';
+        complete.checked = task.completed;
+        complete.title = 'Mark as complete';
+        complete.addEventListener('change', () => toggleComplete(task.id));
+        item.appendChild(complete);
+
+        // Title, category, priority
+        const info = document.createElement('div');
+        info.style.display = 'flex';
+        info.style.flexDirection = 'column';
+        info.style.gap = '0.1rem';
+
+        const topRow = document.createElement('div');
+        topRow.style.display = 'flex';
+        topRow.style.alignItems = 'center';
+        topRow.style.gap = '0.3rem';
+
+        const prio = document.createElement('span');
+        prio.className = 'todo-priority priority-' + task.priority;
+        prio.title = 'Priority: ' + task.priority.charAt(0).toUpperCase() + task.priority.slice(1);
+        topRow.appendChild(prio);
+
+        const cat = document.createElement('span');
+        cat.className = 'todo-category';
+        cat.textContent = task.category;
+        cat.style.background = {
+          'Work': '#e0e7ef',
+          'Personal': '#fce7f3',
+          'Shopping': '#fef9c3',
+          'Study': '#dbeafe',
+          'Other': '#e5e7eb'
+        }[task.category] || '#e5e7eb';
+        topRow.appendChild(cat);
+
+        info.appendChild(topRow);
+
+        const title = document.createElement('span');
+        title.className = 'todo-title';
+        title.textContent = task.title;
+        title.tabIndex = 0;
+        title.setAttribute('aria-label', 'Edit task');
+        title.addEventListener('dblclick', () => startEdit(task.id, title));
+        info.appendChild(title);
+
+        item.appendChild(info);
+
+        // Due date
+        const due = document.createElement('div');
+        due.className = 'todo-date';
+        due.textContent = task.due ? formatDate(task.due) : '';
+        item.appendChild(due);
+
+        // Status
+        const status = document.createElement('div');
+        status.className = 'todo-date';
+        status.textContent = task.completed ? 'Done' : 'Active';
+        status.style.color = task.completed ? 'var(--low)' : 'var(--primary)';
+        item.appendChild(status);
+
+        // Actions
+        const actions = document.createElement('div');
+        actions.className = 'todo-actions';
+
+        // Remind
+        const remindBtn = document.createElement('button');
+        remindBtn.className = 'remind-btn';
+        remindBtn.title = 'Remind now';
+        remindBtn.innerHTML = '⏰';
+        remindBtn.addEventListener('click', () => {
+          notify('Task Reminder', `Task "${task.title}" is due on ${formatDate(task.due)}`);
+        });
+        actions.appendChild(remindBtn);
+
+        // Edit
+        const editBtn = document.createElement('button');
+        editBtn.className = 'edit-btn';
+        editBtn.title = 'Edit';
+        editBtn.innerHTML = '✎';
+        editBtn.addEventListener('click', () => startEdit(task.id, title));
+        actions.appendChild(editBtn);
+
+        // Delete
+        const delBtn = document.createElement('button');
+        delBtn.className = 'delete-btn';
+        delBtn.title = 'Delete';
+        delBtn.innerHTML = '🗑️';
+        delBtn.addEventListener('click', () => deleteTask(task.id));
+        actions.appendChild(delBtn);
+
+        item.appendChild(actions);
+
+        // Drag and Drop
+        item.addEventListener('dragstart', dragStart);
+        item.addEventListener('dragover', dragOver);
+        item.addEventListener('drop', drop);
+        item.addEventListener('dragend', dragEnd);
+
+        todoList.appendChild(item);
+      });
+    }
+
+    // --- CRUD ---
+    function addTask(task) {
+      tasks.push(task);
+      saveTasks();
+      renderTasks();
+      scheduleReminders();
+    }
+    function updateTask(id, updates) {
+      const idx = tasks.findIndex(t => t.id === id);
+      if (idx !== -1) {
+        tasks[idx] = { ...tasks[idx], ...updates };
+        saveTasks();
+        renderTasks();
+        scheduleReminders();
+      }
+    }
+    function deleteTask(id) {
+      tasks = tasks.filter(t => t.id !== id);
+      saveTasks();
+      renderTasks();
+      scheduleReminders();
+    }
+    function toggleComplete(id) {
+      const idx = tasks.findIndex(t => t.id === id);
+      if (idx !== -1) {
+        tasks[idx].completed = !tasks[idx].completed;
+        saveTasks();
+        renderTasks();
+        scheduleReminders();
+      }
+    }
+    function startEdit(id, titleEl) {
+      if (editingId) return;
+      editingId = id;
+      titleEl.setAttribute('contenteditable', 'true');
+      titleEl.focus();
+      titleEl.addEventListener('blur', finishEdit);
+      titleEl.addEventListener('keydown', onEditKey);
+      function finishEdit() {
+        const newTitle = titleEl.textContent.trim();
+        if (newTitle) updateTask(id, { title: newTitle });
+        titleEl.removeAttribute('contenteditable');
+        titleEl.removeEventListener('blur', finishEdit);
+        titleEl.removeEventListener('keydown', onEditKey);
+        editingId = null;
+      }
+      function onEditKey(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          titleEl.blur();
+        }
+        if (e.key === 'Escape') {
+          titleEl.textContent = tasks.find(t => t.id === id).title;
+          titleEl.blur();
+        }
+      }
+    }
+
+    // --- Form ---
+    const form = document.querySelector('.todo-form');
+    form.due.value = todayStr();
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      const title = form.title.value.trim();
+      const category = form.category.value;
+      const priority = form.priority.value;
+      const due = form.due.value;
+      if (!title || !category || !priority || !due) return;
+      addTask({
+        id: uuid(),
+        title,
+        category,
+        priority,
+        due,
+        completed: false,
+        created: Date.now()
+      });
+      form.reset();
+      form.due.value = todayStr();
+    });
+
+    // --- Filters & Search ---
+    const searchInput = document.getElementById('search');
+    const filterStatus = document.getElementById('filter-status');
+    const filterCategory = document.getElementById('filter-category');
+    const filterDateFrom = document.getElementById('filter-date-from');
+    const filterDateTo = document.getElementById('filter-date-to');
+    [searchInput, filterStatus, filterCategory, filterDateFrom, filterDateTo].forEach(el => {
+      el.addEventListener('input', renderTasks);
+      el.addEventListener('change', renderTasks);
+    });
+    function filterTasks(list) {
+      let q = searchInput.value.trim().toLowerCase();
+      let status = filterStatus.value;
+      let cat = filterCategory.value;
+      let from = filterDateFrom.value;
+      let to = filterDateTo.value;
+      return list.filter(task => {
+        if (q && !task.title.toLowerCase().includes(q) && !task.category.toLowerCase().includes(q)) return false;
+        if (status === 'active' && task.completed) return false;
+        if (status === 'completed' && !task.completed) return false;
+        if (cat !== 'all' && task.category !== cat) return false;
+        if (from && compareDate(task.due, from) < 0) return false;
+        if (to && compareDate(task.due, to) > 0) return false;
+        return true;
+      });
+    }
+
+    // --- Drag and Drop ---
+    let dragSrcId = null;
+    function dragStart(e) {
+      dragSrcId = this.dataset.id;
+      this.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    }
+    function dragOver(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      const dragging = document.querySelector('.todo-item.dragging');
+      if (dragging && dragging !== this) {
+        this.parentNode.insertBefore(dragging, this.nextSibling);
+      }
+    }
+    function drop(e) {
+      e.stopPropagation();
+      const dragging = document.querySelector('.todo-item.dragging');
+      if (dragging && dragging !== this) {
+        const fromIdx = tasks.findIndex(t => t.id === dragSrcId);
+        const toIdx = tasks.findIndex(t => t.id === this.dataset.id);
+        if (fromIdx !== -1 && toIdx !== -1 && fromIdx !== toIdx) {
+          const [moved] = tasks.splice(fromIdx, 1);
+          tasks.splice(toIdx, 0, moved);
+          saveTasks();
+          renderTasks();
+        }
+      }
+      dragEnd.call(this);
+    }
+    function dragEnd() {
+      this.classList.remove('dragging');
+      dragSrcId = null;
+    }
+
+    // --- Init ---
+    loadTasks();
+    renderTasks();
+    scheduleReminders();
+  </script>
+</body>
+</html>
