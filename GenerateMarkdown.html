@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文档转Markdown工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .upload-section {
+            margin-bottom: 30px;
+        }
+
+        .upload-area {
+            border: 3px dashed #d1d5db;
+            border-radius: 12px;
+            padding: 60px 20px;
+            text-align: center;
+            background: #f9fafb;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .upload-area:hover {
+            border-color: #4f46e5;
+            background: #f0f9ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #4f46e5;
+            background: #eff6ff;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: #6b7280;
+            margin-bottom: 20px;
+        }
+
+        .upload-text {
+            font-size: 1.2rem;
+            color: #374151;
+            margin-bottom: 10px;
+        }
+
+        .upload-hint {
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin: 10px 5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(79, 70, 229, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #4f46e5;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result-section {
+            margin-top: 30px;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #e5e7eb;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            color: #6b7280;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            color: #4f46e5;
+            border-bottom-color: #4f46e5;
+            font-weight: 500;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .output-area {
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            padding: 20px;
+            background: #f9fafb;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            min-height: 300px;
+            max-height: 500px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
+        .preview-area {
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            padding: 20px;
+            background: white;
+            min-height: 300px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .file-info {
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .file-info.show {
+            display: block;
+        }
+
+        .error {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            display: none;
+        }
+
+        .success {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #16a34a;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            display: none;
+        }
+
+        .actions {
+            margin-top: 15px;
+            text-align: right;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .tab {
+                text-align: left;
+                border-bottom: 1px solid #e5e7eb;
+            }
+        }
+    </style>
+    <!-- 引入必要的库 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.2/marked.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📝 文档转Markdown工具</h1>
+            <p>支持PDF和DOCX文件转换为Markdown格式</p>
+        </div>
+
+        <div class="content">
+            <div class="upload-section">
+                <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+                    <div class="upload-icon">📁</div>
+                    <div class="upload-text">点击选择文件或拖拽文件到此处</div>
+                    <div class="upload-hint">支持PDF、DOCX格式，最大50MB</div>
+                </div>
+                <input type="file" id="fileInput" accept=".pdf,.docx" />
+            </div>
+
+            <div class="file-info" id="fileInfo">
+                <strong>文件信息：</strong>
+                <div id="fileName"></div>
+                <div id="fileSize"></div>
+                <div id="fileType"></div>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <div>正在转换文件，请稍候...</div>
+            </div>
+
+            <div class="error" id="error"></div>
+            <div class="success" id="success"></div>
+
+            <button class="btn" id="convertBtn" onclick="convertFile()" disabled>开始转换</button>
+
+            <div class="result-section" id="resultSection" style="display: none;">
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('markdown')">Markdown源码</button>
+                    <button class="tab" onclick="switchTab('preview')">预览效果</button>
+                </div>
+
+                <div class="tab-content active" id="markdownTab">
+                    <div class="output-area" id="markdownOutput"></div>
+                    <div class="actions">
+                        <button class="btn" onclick="copyToClipboard()">📋 复制到剪贴板</button>
+                        <button class="btn" onclick="downloadMarkdown()">💾 下载Markdown文件</button>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="previewTab">
+                    <div class="preview-area" id="previewOutput"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentFile = null;
+        let markdownContent = '';
+
+        // 设置PDF.js worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        // 文件上传相关
+        const uploadArea = document.querySelector('.upload-area');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const convertBtn = document.getElementById('convertBtn');
+        const loading = document.getElementById('loading');
+        const errorDiv = document.getElementById('error');
+        const successDiv = document.getElementById('success');
+
+        // 拖拽上传
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        // 文件选择
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        // 处理文件
+        function handleFile(file) {
+            // 验证文件类型
+            const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+            if (!allowedTypes.includes(file.type)) {
+                showError('请选择PDF或DOCX格式的文件');
+                return;
+            }
+
+            // 验证文件大小 (50MB)
+            if (file.size > 50 * 1024 * 1024) {
+                showError('文件大小不能超过50MB');
+                return;
+            }
+
+            currentFile = file;
+            showFileInfo(file);
+            convertBtn.disabled = false;
+            hideMessages();
+        }
+
+        // 显示文件信息
+        function showFileInfo(file) {
+            document.getElementById('fileName').textContent = `文件名：${file.name}`;
+            document.getElementById('fileSize').textContent = `大小：${formatFileSize(file.size)}`;
+            document.getElementById('fileType').textContent = `类型：${getFileTypeText(file.type)}`;
+            fileInfo.classList.add('show');
+        }
+
+        // 格式化文件大小
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // 获取文件类型文本
+        function getFileTypeText(type) {
+            switch (type) {
+                case 'application/pdf':
+                    return 'PDF文档';
+                case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+                    return 'Word文档 (DOCX)';
+                default:
+                    return '未知类型';
+            }
+        }
+
+        // 转换文件
+        async function convertFile() {
+            if (!currentFile) return;
+
+            showLoading(true);
+            hideMessages();
+            
+            try {
+                let content = '';
+                
+                if (currentFile.type === 'application/pdf') {
+                    content = await convertPDF(currentFile);
+                } else if (currentFile.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+                    content = await convertDOCX(currentFile);
+                }
+
+                markdownContent = content;
+                showResult(content);
+                showSuccess('文件转换成功！');
+                
+            } catch (error) {
+                console.error('转换错误:', error);
+                showError('文件转换失败：' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // 转换PDF
+        async function convertPDF(file) {
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+            let fullText = '';
+
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const textContent = await page.getTextContent();
+                
+                let pageText = '';
+                let lastY = null;
+                
+                textContent.items.forEach((item) => {
+                    // 检测换行
+                    if (lastY !== null && Math.abs(lastY - item.transform[5]) > 5) {
+                        pageText += '\n';
+                    }
+                    pageText += item.str + ' ';
+                    lastY = item.transform[5];
+                });
+                
+                fullText += pageText + '\n\n';
+            }
+
+            return convertTextToMarkdown(fullText);
+        }
+
+        // 转换DOCX
+        async function convertDOCX(file) {
+            const arrayBuffer = await file.arrayBuffer();
+            const result = await mammoth.convertToMarkdown({arrayBuffer: arrayBuffer});
+            return result.value;
+        }
+
+        // 将纯文本转换为Markdown格式
+        function convertTextToMarkdown(text) {
+            let markdown = text;
+            
+            // 清理多余的空行
+            markdown = markdown.replace(/\n\s*\n\s*\n/g, '\n\n');
+            
+            // 检测标题（基于行的特征）
+            const lines = markdown.split('\n');
+            const processedLines = lines.map(line => {
+                const trimmed = line.trim();
+                
+                // 跳过空行
+                if (!trimmed) return line;
+                
+                // 检测可能的标题（较短的行，且不以标点符号结尾）
+                if (trimmed.length < 50 && 
+                    !trimmed.endsWith('.') && 
+                    !trimmed.endsWith('。') && 
+                    !trimmed.endsWith('，') && 
+                    !trimmed.endsWith(',') &&
+                    /^[A-Za-z0-9\u4e00-\u9fa5\s]+$/.test(trimmed)) {
+                    
+                    // 根据位置和内容判断标题级别
+                    if (trimmed.length < 20) {
+                        return `## ${trimmed}`;
+                    } else {
+                        return `### ${trimmed}`;
+                    }
+                }
+                
+                return line;
+            });
+            
+            markdown = processedLines.join('\n');
+            
+            // 检测列表项
+            markdown = markdown.replace(/^(\s*)[-•·]\s+(.+)$/gm, '$1- $2');
+            markdown = markdown.replace(/^(\s*)(\d+)[\.\)]\s+(.+)$/gm, '$1$2. $3');
+            
+            return markdown;
+        }
+
+        // 显示结果
+        function showResult(content) {
+            document.getElementById('markdownOutput').textContent = content;
+            document.getElementById('previewOutput').innerHTML = marked.parse(content);
+            document.getElementById('resultSection').style.display = 'block';
+        }
+
+        // 切换标签页
+        function switchTab(tabName) {
+            // 移除所有活动状态
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // 激活当前标签页
+            event.target.classList.add('active');
+            document.getElementById(tabName + 'Tab').classList.add('active');
+        }
+
+        // 复制到剪贴板
+        async function copyToClipboard() {
+            try {
+                await navigator.clipboard.writeText(markdownContent);
+                showSuccess('已复制到剪贴板！');
+            } catch (err) {
+                // 降级方案
+                const textArea = document.createElement('textarea');
+                textArea.value = markdownContent;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                showSuccess('已复制到剪贴板！');
+            }
+        }
+
+        // 下载Markdown文件
+        function downloadMarkdown() {
+            const blob = new Blob([markdownContent], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = (currentFile.name.replace(/\.[^/.]+$/, "") || 'document') + '.md';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // 显示/隐藏加载状态
+        function showLoading(show) {
+            loading.style.display = show ? 'block' : 'none';
+            convertBtn.disabled = show;
+        }
+
+        // 显示错误信息
+        function showError(message) {
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            successDiv.style.display = 'none';
+        }
+
+        // 显示成功信息
+        function showSuccess(message) {
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            errorDiv.style.display = 'none';
+            
+            // 3秒后自动隐藏
+            setTimeout(() => {
+                successDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        // 隐藏消息
+        function hideMessages() {
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
