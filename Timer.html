@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Centered Timer</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+
+        .timer-container {
+            text-align: center;
+            background-color: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .timer-display {
+            font-size: 48px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .start-btn {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .start-btn:hover {
+            background-color: #45a049;
+        }
+
+        .pause-btn {
+            background-color: #ff9800;
+            color: white;
+        }
+
+        .pause-btn:hover {
+            background-color: #f57c00;
+        }
+
+        .reset-btn {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .reset-btn:hover {
+            background-color: #da190b;
+        }
+    </style>
+</head>
+<body>
+    <div class="timer-container">
+        <div class="timer-display" id="timerDisplay">00:00:00</div>
+        <div class="controls">
+            <button class="start-btn" onclick="startTimer()">Start</button>
+            <button class="pause-btn" onclick="pauseTimer()">Pause</button>
+            <button class="reset-btn" onclick="resetTimer()">Reset</button>
+        </div>
+    </div>
+
+    <script>
+        let startTime = 0;
+        let elapsedTime = 0;
+        let timerInterval = null;
+        let isRunning = false;
+
+        function formatTime(milliseconds) {
+            const totalSeconds = Math.floor(milliseconds / 1000);
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+
+            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function updateTimer() {
+            const currentTime = Date.now();
+            elapsedTime = currentTime - startTime;
+            document.getElementById('timerDisplay').textContent = formatTime(elapsedTime);
+        }
+
+        function startTimer() {
+            if (!isRunning) {
+                startTime = Date.now() - elapsedTime;
+                timerInterval = setInterval(updateTimer, 10);
+                isRunning = true;
+            }
+        }
+
+        function pauseTimer() {
+            if (isRunning) {
+                clearInterval(timerInterval);
+                isRunning = false;
+            }
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            isRunning = false;
+            elapsedTime = 0;
+            document.getElementById('timerDisplay').textContent = '00:00:00';
+        }
+    </script>
+</body>
+</html>
